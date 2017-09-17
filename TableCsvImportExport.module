@@ -1,6 +1,5 @@
 <?php
 
-// TODO: Schleife Export --> Template von einem Repeater für Export auswählen --> in unserem Fall Anmeldungen -> Template Ergebnisse
 // TODO: Delimiter etc. aus den Einstellungen auslesen
 // TODO: Variablen umbenennen
 
@@ -41,8 +40,8 @@ class TableCsvImportExport extends WireData implements Module
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->attr('id', 'export_settings');
         $fieldset->label = __("Export Settings");
-        $fieldset->description = __("Export settings for repeater fields");
-        $fieldset->collapsed = Inputfield::collapsedYes;
+        $fieldset->description = __("Export settings for table fields");
+//        $fieldset->collapsed = Inputfield::collapsedYes;
         $inputfields->append($fieldset);
 
         $f = $this->wire('modules')->get('InputfieldCheckbox');
@@ -51,60 +50,72 @@ class TableCsvImportExport extends WireData implements Module
         $f->columnWidth = 20;
         $f->attr('name', 'allow_export');
         $value = $this->wire('fields')->get($event->object->name)->allow_export;
-        $f->attr('checked', $this->wire('fields')->get($event->object->name)->allow_export ? 'checked' : '');
+        $f->attr('checked', $value ? 'checked' : '');
         $fieldset->append($f);
 
         $f = $this->wire('modules')->get("InputfieldText");
         $f->label = __('Columns separated with');
         $f->description = __('For tab separated, enter: tab');
-        //$f->value = ';';
+        $f->value = $this->delimiter;
         $f->attr('name', 'delimiter');
+        $f->attr('value', $this->delimiter);
         $value = $this->wire('fields')->get($event->object->name)->delimiter;
+        if ($value == ''){
+            $f->value = ',';
+        }
+        else{
+            $f->value = $value;
+        }
+
         $f->columnWidth = 20;
         $fieldset->append($f);
 
         $f = $this->wire('modules')->get("InputfieldText");
         $f->label = __('Column enclosure');
+        $f->description = __('Enclosure between values, e.g. double quotes ("")');
         $f->attr('name', 'enclosure');
-        //$f->value = '"';
         $value = $this->wire('fields')->get($event->object->name)->enclosure;
+        if ($value == ''){
+            $f->value = '"';
+        }
+        else{
+            $f->value = $value;
+        }
         $f->columnWidth = 20;
         $fieldset->append($f);
 
         $f = $this->wire('modules')->get("InputfieldText");
         $f->label = __('File extension');
         $f->attr('name', 'extension');
-        //$f->value = 'csv';
+        $value = $this->wire('fields')->get($event->object->name)->extension;
+        if ($value == ''){
+            $f->value = 'csv';
+        }
+        else{
+            $f->value = $value;
+        }
         $f->columnWidth = 20;
         $fieldset->append($f);
 
-
-        // TODO: add selection instead of radio buttons
-        // TODO: doesn't work yet!
         $f = $this->wire('modules')->get("InputfieldRadios");
         $f->label = __('Export template');
-        $f->description = __('You can select a different Repeater field template for export. For example you have the registrations for a run and you want to upload the results afterwards. Then you can export the registations with an results template');
+        $f->description = __('You can select a different Table field template for export. For example you have the registrations for a run and you want to upload the results afterwards. Then you can export the registations with an results template');
         $f->attr('name', 'template');
-        //$f->value = 'csv';
         $f->columnWidth = 20;
         $allFields = $this->wire('fields');
-        $i = 1;
         foreach ($allFields as $field) {
             if ($field->type == "FieldtypeRepeater"){
-                //$f->description = $field->name;
-                $f->addOption($i, $field->name);
-                $i++;
+                $f->addOption($field->name, $field->name);
             }
         }
+        $value = $this->wire('fields')->get($event->object->name)->template;
+        $f->value = $value;
         $fieldset->append($f);
-
-
-
 
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->attr('id', 'import_settings');
         $fieldset->label = __("Import Settings");
-        $fieldset->description = __("Import settings for repeater fields");
+        $fieldset->description = __("Import settings for table fields");
         $fieldset->collapsed = Inputfield::collapsedYes;
         $inputfields->append($fieldset);
 
@@ -126,7 +137,6 @@ class TableCsvImportExport extends WireData implements Module
         $f->attr('checked', $this->wire('fields')->get($event->object->name)->allow_overwrite ? 'checked' : '');
         $fieldset->append($f);
     }
-
 
     public function buildForms(HookEvent $event){
         $fieldName = $event->object->name;

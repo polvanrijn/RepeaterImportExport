@@ -75,48 +75,67 @@ class ProcessTableCsvExport extends Process implements Module {
 
 
     public function exportCsv($event = NULL) {
-        // TODO: fix hard coded part!
-        $delimiter = ";";
-        $enclosure = '"';
-        $extension = "csv";
-        $csv = array();
         $fieldName = $this->wire('input')->get->fn;
-        // TODO: Change hard coded
-        $page = $this->wire('pages')->get(1032);
-        $thisRepeater = $page->$fieldName;
+        $delimiter = $this->wire('fields')->get($fieldName)->delimiter;
+        $enclosure = $this->wire('fields')->get($fieldName)->enclosure;
+        $extension = $this->wire('fields')->get($fieldName)->extension;
+        $exportTemplate = $this->wire('fields')->get($fieldName)->template;
+
+        $csv = array();
+
+        //actual field name is never mangled with a table extension
+        $actualFieldName = (strpos($fieldName, '_table') !== FALSE) ? strstr($fieldName, '_table', true) : $fieldName;
+
+        //get actual page, considering it might be a table
+        if ($actualFieldName != $fieldName) $tableId = str_replace($actualFieldName . '_table', '', $fieldName);
+        if (isset($tableId)) {
+            $page = $this->wire('pages')->get($tableId);
+        } else {
+            $page = !is_null($event) ? $event->object : $this->wire('pages')->get((int)$this->wire('input')->get->pid);
+        }
+        # TODO: Change hard coded
+        // Get current page
+        $page = $this->wire('pages')->get(1032); // current page
+
+        $thisTable = $page->$fieldName; // get table field from current page
+        $thisExportTable = $page->$exportTemplate;
+        $thisExportTableField = $thisExportTable->first()->fields;
         $fields = array();
-        $fieldsRepeater = $thisRepeater->first()->fields;
-        foreach ($fieldsRepeater as $field){
+
+        foreach ($thisExportTableField as $field){
             $fields[] = $field;
         }
 
-        $spalte = 0;
+        $column = 0;
         foreach($fields as $field){
-                $csv[0][$spalte] = $field;
-                $spalte++;
+            $csv[0][$column] = $field;
+            $column++;
         }
 
-        $zeile = 1;
-        foreach($thisRepeater as $repeaterItem){
+        $row = 1;
+        foreach($thisTable as $tableItem){
             $wholeRowEmpty = true;
             foreach($fields as $field) {
-                if ($repeaterItem->$field != "") {
+                if ($tableItem->$field != "") {
                     $wholeRowEmpty =false;
                 }
             }
             if ($wholeRowEmpty == false) {
                 foreach ($fields as $field) {
-                    if ($repeaterItem->$field != "") {
-                        $csv[$zeile][$spalte] = $repeaterItem->$field;
+                    if (isset($tableItem->$field)) {
+                        if ($tableItem->$field != "") {
+                            $csv[$row][$column] = $tableItem->$field;
+                        } else {
+                            $csv[$row][$column] = "";
+                        }
                     } else {
-                        $csv[$zeile][$spalte] = "";
+                        $csv[$row][$column] = "";
                     }
-                    $spalte++;
+                    $column++;
                 }
             }
-            $zeile++;
+            $row++;
         }
-
 
         header("Content-type: text/csv");
         header("Content-Disposition: attachment; filename=".$fieldName . "_" .$page->title . ".".$extension);
@@ -125,7 +144,5 @@ class ProcessTableCsvExport extends Process implements Module {
 
         $this->outputCSV($csv, $delimiter, $enclosure);
         exit;
-
     }
-
 }
