@@ -81,6 +81,7 @@ class ProcessTableCsvExport extends Process implements Module {
         $extension = $this->wire('fields')->get($fieldName)->extension;
         $exportTemplate = $this->wire('fields')->get($fieldName)->template;
 
+
         $csv = array();
 
         //actual field name is never mangled with a repeater extension
@@ -88,23 +89,34 @@ class ProcessTableCsvExport extends Process implements Module {
 
         //get actual page, considering it might be a repeater
         if($actualFieldName != $fieldName) $repeaterId = str_replace($actualFieldName . '_repeater', '', $fieldName);
-        if(isset($repeaterId)) {
-            $page = $this->wire('pages')->get($repeaterId);
-        }
-        else {
+//        if(isset($repeaterId)) {
+//            $page = $this->wire('pages')->get($repeaterId);
+//        }
+//        else {
             $page = !is_null($event) ? $event->object : $this->wire('pages')->get((int)$this->wire('input')->get->pid);
-        }
+//        }
 
         $page->of(false);
-
         $thisTable = $page->$fieldName; // get table field from current page
+
+        if (sizeof($thisTable) == 0){
+            $thisTable->getNew();
+        }
+        if (sizeof($thisTable) == 1){
+            $thisTable->getNew();
+        }
         $thisExportTable = $page->$exportTemplate;
+        if ($thisExportTable->first()->fields == null){
+            $thisExportTable->getNew();
+        }
         $thisExportTableField = $thisExportTable->first()->fields;
+
         $fields = array();
 
         foreach ($thisExportTableField as $field){
             $fields[] = $field;
         }
+
 
         $column = 0;
         foreach($fields as $field){
@@ -116,12 +128,14 @@ class ProcessTableCsvExport extends Process implements Module {
         foreach($thisTable as $tableItem){
             $wholeRowEmpty = true;
             foreach($fields as $field) {
+                barDump($tableItem->$field);
                 if ($tableItem->$field != "") {
-                    $wholeRowEmpty =false;
+                    $wholeRowEmpty = false;
                 }
             }
             if ($wholeRowEmpty == false) {
                 foreach ($fields as $field) {
+                    barDump($tableItem->$field);
                     if (isset($tableItem->$field)) {
                         if ($tableItem->$field != "") {
                             $csv[$row][$column] = $tableItem->$field;

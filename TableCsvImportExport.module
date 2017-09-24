@@ -201,13 +201,13 @@ class TableCsvImportExport extends WireData implements Module
         $fieldset->label = __("Export CSV");
         $fieldset->description = __("Export the content of this table to a CSV file");
 
-        $p = $this->wire('process')->getPage(); // define page
+        $page = $this->wire('process')->getPage(); // define page
 
         $f = $this->wire('modules')->get("InputfieldButton");
         $f->name = $fieldName . '_export_button';
         $f->value = $this->_x('Export as CSV', 'button');
         $f->attr('class', 'ui-button ui-widget ui-corner-all ui-state-default export_csv');
-        $f->attr('data-pageid', $p->id);
+        $f->attr('data-pageid', $page->id);
         $f->attr('data-fieldname', $event->object->name);
         $fieldset->add($f);
 
