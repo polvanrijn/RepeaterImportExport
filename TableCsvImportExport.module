@@ -1,6 +1,5 @@
 <?php
 
-// TODO: Delimiter etc. aus den Einstellungen auslesen
 // TODO: Variablen umbenennen
 
 class TableCsvImportExport extends WireData implements Module
@@ -202,6 +201,7 @@ class TableCsvImportExport extends WireData implements Module
         $fieldset->label = __("Export CSV");
         $fieldset->description = __("Export the content of this table to a CSV file");
 
+        $p = $this->wire('process')->getPage(); // define page
 
         $f = $this->wire('modules')->get("InputfieldButton");
         $f->name = $fieldName . '_export_button';
@@ -260,9 +260,8 @@ class TableCsvImportExport extends WireData implements Module
 
         $csvData = !is_null($event) ? $event->arguments(0) : $this->wire('session')->{$fieldName . '_csv_data'};
         unset($this->wire('session')->{$fieldName . '_csv_data'});
-        // TODO: change hard coded part
-        $delimiter = ";";
-        $enclosure = '"';
+        $delimiter = $this->wire('fields')->get($fieldName)->delimiter;
+        $enclosure = $this->wire('fields')->get($fieldName)->enclosure;
         $overwrite = !is_null($event) ? $event->arguments(6) : $this->wire('input')->post->{$fieldName . '_append_overwrite'};
 
 
@@ -312,7 +311,6 @@ class TableCsvImportExport extends WireData implements Module
                     for ($k = 0; $k < count($data); $k++) {
                         if ($rows->data[0][$k] == $field) {
                             $item->$field = $data[$j];
-                            // TODO: Add support for all types of data
                         }
                     }
 

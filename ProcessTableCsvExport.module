@@ -83,19 +83,19 @@ class ProcessTableCsvExport extends Process implements Module {
 
         $csv = array();
 
-        //actual field name is never mangled with a table extension
-        $actualFieldName = (strpos($fieldName, '_table') !== FALSE) ? strstr($fieldName, '_table', true) : $fieldName;
+        //actual field name is never mangled with a repeater extension
+        $actualFieldName = (strpos($fieldName, '_repeater') !== FALSE) ? strstr($fieldName, '_repeater', true) : $fieldName;
 
-        //get actual page, considering it might be a table
-        if ($actualFieldName != $fieldName) $tableId = str_replace($actualFieldName . '_table', '', $fieldName);
-        if (isset($tableId)) {
-            $page = $this->wire('pages')->get($tableId);
-        } else {
+        //get actual page, considering it might be a repeater
+        if($actualFieldName != $fieldName) $repeaterId = str_replace($actualFieldName . '_repeater', '', $fieldName);
+        if(isset($repeaterId)) {
+            $page = $this->wire('pages')->get($repeaterId);
+        }
+        else {
             $page = !is_null($event) ? $event->object : $this->wire('pages')->get((int)$this->wire('input')->get->pid);
         }
-        # TODO: Change hard coded
-        // Get current page
-        $page = $this->wire('pages')->get(1032); // current page
+
+        $page->of(false);
 
         $thisTable = $page->$fieldName; // get table field from current page
         $thisExportTable = $page->$exportTemplate;
